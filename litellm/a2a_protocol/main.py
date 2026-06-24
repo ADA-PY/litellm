@@ -274,7 +274,9 @@ async def _stream_messages(
             event,
             request_id=request.id,
         )
-        yield SendStreamingMessageResponse(root=compat_chunk)  # pyright: ignore[reportArgumentType]
+        yield SendStreamingMessageResponse(
+            root=compat_chunk  # pyright: ignore[reportArgumentType]
+        )
 
 
 async def _execute_a2a_stream_with_retry(
