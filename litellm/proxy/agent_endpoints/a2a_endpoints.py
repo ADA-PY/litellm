@@ -28,6 +28,7 @@ from litellm.proxy.a2a.version_convert import (
     normalize_stream_event,
 )
 from litellm.proxy.agent_endpoints.utils import merge_agent_headers
+from litellm.proxy.utils import get_custom_url
 from litellm.proxy.auth.user_api_key_auth import user_api_key_auth
 from litellm.types.utils import all_litellm_params
 
@@ -544,7 +545,7 @@ async def get_agent_card(
         # Copy and rewrite URL to point to LiteLLM proxy
         agent_card = {
             **agent.agent_card_params,
-            "url": f"{str(request.base_url).rstrip('/')}/a2a/{agent_id}",
+            "url": get_custom_url(str(request.base_url), route=f"a2a/{agent_id}"),
         }
 
         verbose_proxy_logger.debug(
@@ -907,9 +908,9 @@ async def invoke_agent_a2a(
             if method == "agent/getAuthenticatedExtendedCard":
                 if isinstance(result.get("result"), dict):
                     if "url" in result["result"]:
-                        result["result"][
-                            "url"
-                        ] = f"{str(request.base_url).rstrip('/')}/a2a/{agent_id}"
+                        result["result"]["url"] = get_custom_url(
+                            str(request.base_url), route=f"a2a/{agent_id}"
+                        )
                     result["result"] = normalize_agent_card(
                         result["result"], served_version
                     )
