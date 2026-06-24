@@ -639,7 +639,11 @@ async def guardrails_usage_logs(
             ) or _find_config_loaded_guardrail(guardrail_id)
             if guardrail:
                 logical_name = _get_guardrail_dict_field(guardrail, "guardrail_name")
-                if logical_name and isinstance(logical_name, str) and logical_name not in effective_guardrail_ids:
+                if (
+                    logical_name
+                    and isinstance(logical_name, str)
+                    and logical_name not in effective_guardrail_ids
+                ):
                     effective_guardrail_ids.append(logical_name)
 
         where = _build_usage_logs_where(
