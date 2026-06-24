@@ -209,8 +209,8 @@ async def _send_message(
     )
     return SendMessageResponse(
         root=SendMessageSuccessResponse(
-            id=request.id,
-            result=stream_compat.result,
+            id=request.id,  # pyright: ignore[reportArgumentType]
+            result=stream_compat.result,  # pyright: ignore[reportArgumentType]
         )
     )
 
@@ -274,7 +274,7 @@ async def _stream_messages(
             event,
             request_id=request.id,
         )
-        yield SendStreamingMessageResponse(root=compat_chunk)
+        yield SendStreamingMessageResponse(root=compat_chunk)  # pyright: ignore[reportArgumentType]
 
 
 async def _execute_a2a_stream_with_retry(
@@ -645,7 +645,7 @@ async def asend_message_streaming(
             raise ValueError(
                 "Either a2a_client or api_base is required for standard A2A flow"
             )
-        trace_id = str(uuid.uuid4())
+        trace_id = str(request.id) if request.id else str(uuid.uuid4())
         extra_headers: dict[str, str] = {"X-LiteLLM-Trace-Id": trace_id}
         if agent_id:
             extra_headers["X-LiteLLM-Agent-Id"] = agent_id
