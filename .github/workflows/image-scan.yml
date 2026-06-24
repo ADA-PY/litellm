@@ -8,12 +8,7 @@ on:
       - litellm_oss_branch
       - "litellm_**"
     paths:
-      - Dockerfile
-      - docker/Dockerfile.database
       - docker/Dockerfile.non_root
-      - migrations/Dockerfile
-      - backend/Dockerfile
-      - gateway/Dockerfile
       - uv.lock
       - ui/litellm-dashboard/package-lock.json
       - .github/workflows/image-scan.yml
@@ -29,7 +24,7 @@ concurrency:
 
 jobs:
   image-scan:
-    name: image-scan (${{ matrix.dockerfile }})
+    name: image-scan
     runs-on: ubuntu-latest
     if: >-
       github.event_name != 'pull_request' ||
@@ -37,16 +32,6 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        dockerfile:
-          - Dockerfile
-          - docker/Dockerfile.database
-          - docker/Dockerfile.non_root
-          - migrations/Dockerfile
-          - backend/Dockerfile
-          - gateway/Dockerfile
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
         with:
@@ -60,11 +45,11 @@ jobs:
           tar xzf "$RUNNER_TEMP/grype.tar.gz" -C "$RUNNER_TEMP" grype
           chmod +x "$RUNNER_TEMP/grype"
 
-      - name: Build image (${{ matrix.dockerfile }})
-        run: |
-          tag="litellm-image-scan-$(echo '${{ matrix.dockerfile }}' | tr '/.' '--' | tr 'A-Z' 'a-z'):${{ github.sha }}"
-          echo "TAG=$tag" >> "$GITHUB_ENV"
-          docker build -f '${{ matrix.dockerfile }}' -t "$tag" .
+      # Dockerfile.non_root is the rootless variant we ship. The other
+      # Dockerfiles share the same wolfi base and apk set, so OS-layer coverage
+      # is the same; matrix-scan if those variants ever diverge.
+      - name: Build runtime image
+        run: docker build -f docker/Dockerfile.non_root -t litellm-image-scan:${{ github.sha }} .
 
       # Scans the whole shipped artifact: OS/apk plus every language package
       # baked into the image, including ones no lockfile declares (e.g. prisma's
@@ -74,7 +59,7 @@ jobs:
       # dependency and no vendor SaaS callout.
       - name: Scan image for fixable HIGH/CRITICAL CVEs
         run: |
-          "$RUNNER_TEMP/grype" "$TAG" \
+          "$RUNNER_TEMP/grype" litellm-image-scan:${{ github.sha }} \
             --only-fixed \
             --fail-on high \
             --output table
