@@ -424,6 +424,9 @@ class AnthropicStreamWrapper(AdapterCompletionStreamWrapper):
                 if chunk == "None" or chunk is None:
                     raise Exception
 
+                if not chunk.choices and getattr(chunk, "usage", None) is None:
+                    continue
+
                 should_start_new_block = self._should_start_new_content_block(chunk)
                 if should_start_new_block:
                     self._increment_content_block_index()
@@ -671,6 +674,9 @@ class AnthropicStreamWrapper(AdapterCompletionStreamWrapper):
             async for chunk in self.completion_stream:
                 if chunk == "None" or chunk is None:
                     raise Exception
+
+                if not chunk.choices and getattr(chunk, "usage", None) is None:
+                    continue
 
                 # Check if we need to start a new content block
                 should_start_new_block = self._should_start_new_content_block(chunk)
